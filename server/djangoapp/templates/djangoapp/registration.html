@@ -4,8 +4,80 @@
     <meta charset="UTF-8">
     {% load static %}
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+     <style>
+        ul li 
+        {
+            margin-bottom: 1em;
+        } 
+
+        h1
+        {
+            padding: 1em;
+            margin: 0px;
+            background: teal;
+            color: white;
+        }
+
+        body
+        {
+            background: #ededed;
+        }
+
+        .nav-color
+        {
+            background: #fff;
+            padding: .5em;
+        }
+
+        .div-para
+        {
+            width: 60%;
+            padding: 2em;
+            background: #fff;
+            margin: 2em auto;
+        }
+
+        .div-who-text
+        {
+            color: grey;
+        }
+    </style>
 </head>
     <body>
     <!--Add a registration form here -->
+        <h1>Sign up</h1>
+        <div class='div-para' >
+            <form class="form-inline" action="{% url 'djangoapp:registration' %}" method="post">
+                    {% csrf_token %}
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <input type="text" class="form-control" placeholder="Username" name="username" >
+                    </li>
+                    <li>
+                        <input type="text" class="form-control" placeholder="E-mail" name="email" >
+                    </li>
+                    <li>
+                        <input type="text" class="form-control" placeholder="First name" name="f_name" >
+                    </li>
+                    <li>
+                        <input type="text" class="form-control" placeholder="Last name" name="l_name" >
+                    </li>
+                    <li>
+                        <input type="password" class="form-control" placeholder="Password" name="psw" >
+                    </li>
+                    <li>
+                        <input type="password" class="form-control" placeholder="Password (again)" name="psw2" >
+                    </li>
+                    <li>
+                        <button class="btn btn-primary" type="submit">Sign up</button>
+                        <a class="btn btn-link" href="{% url 'djangoapp:index' %}">Login</a>
+                    </li>
+                    <li>
+                        {{ err }}
+                    </li>
+                </ul>
+            </form>
+        </div>
     </body>
 </html>
