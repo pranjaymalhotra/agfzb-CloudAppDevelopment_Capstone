@@ -91,11 +91,36 @@ def get_dealerships(request):
         return render(request, 'djangoapp/index.html', context)
 
 
-# Create a `get_dealer_details` view to render the reviews of a dealer
-# def get_dealer_details(request, dealer_id):
-# ...
+def get_dealer_details(request, dealer_id):
+    context = {}
+    if request.method == "GET":
+        url = "https://4c16990c.us-south.apigw.appdomain.cloud/api/review"
+        reviews = get_dealer_reviews_from_cf(url)
+        context['reviews'] = filter(lambda x: x.dealership == dealer_id, reviews)
+        context['dealer_id'] = dealer_id
+        context['dealer'] = get_dealer_detail_infos(dealer_id)
+    return render(request, 'djangoapp/dealer_details.html', context)
 
-# Create a `add_review` view to submit a review
-# def add_review(request, dealer_id):
-# ...
+def add_review(request, dealer_id):
+    if request.method == "GET":
+        context = {}
+        context['dealer_id'] = dealer_id
+        context['dealer'] = get_dealer_detail_infos(dealer_id)
+        context['cars'] = CarModel.objects.all()
+        return render(request, 'djangoapp/add_review.html', context)
+    if request.method == "POST":
+        url = "https://4c16990c.us-south.apigw.appdomain.cloud/api/review"
+        payload = {}
+        payload['name'] = request.POST['username']
+        payload['dealership'] = dealer_id
+        payload['review'] = request.POST['review']
+        payload['purchase'] = request.POST['purchase']
+        payload['purchase_date'] = request.POST['purchase_date']
+        car = CarModel.objects.get(id = request.POST['car'])
+        if car:
+            payload['car_make'] = car.make.name
+            payload['car_model'] = car.name
+            payload['car_year'] = car.year.strftime("%Y")
+        store_review(url, payload)
+    return redirect('djangoapp:dealer_details', dealer_id = dealer_id)
 
