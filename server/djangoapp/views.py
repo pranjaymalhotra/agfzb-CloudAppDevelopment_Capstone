@@ -124,3 +124,7 @@ def add_review(request, dealer_id):
         store_review(url, payload)
     return redirect('djangoapp:dealer_details', dealer_id = dealer_id)
 
+def get_dealer_detail_infos(dealer_id):
+    url = "https://4c16990c.us-south.apigw.appdomain.cloud/api/dealership"
+    dealerships = get_dealers_from_cf(url)
+    return next(filter(lambda x: x.id == dealer_id, dealerships))
