@@ -7,6 +7,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
+from .models import CarModel
+from .restapis import get_dealers_from_cf, get_dealer_reviews_from_cf, store_review
 import logging
 import json
 
