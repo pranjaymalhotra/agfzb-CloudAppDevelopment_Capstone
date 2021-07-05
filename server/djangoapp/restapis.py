@@ -14,20 +14,14 @@ URL_API = ''.join([
     '/api'
 ])
 
-WATSON_URL = ''.join([
-    'https://',
-    'api.eu-de.natural-language-understanding.watson.cloud.ibm.com',
-    '/instances/62b5e198-cdd9-44c9-93e1-deb914502af3'
-])
-
-WATSON_API_KEY = os.environ.get('WATSON_API_KEY')
+WATSON_URL = ('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/ea9342cf-1f2d-408d-8a92-2ce03dd249ea')
+WATSON_API_KEY = ('90lAvlUc2tQWaHAD9bRopwKh2DZUFKwVV3uiSZwPrEz_')
 
 def get_request(url, **kwargs):
     print(kwargs)
     print("GET from {} ".format(url))
     try:
         if 'api_key' in kwargs.keys():
-            #api_key in params, use auth
             api_key = kwargs['api_key']
             del(kwargs['api_key'])
             response = requests.get(
@@ -39,7 +33,6 @@ def get_request(url, **kwargs):
                 params=kwargs
                 )
         else:
-            #no api_key, don't authenticate
             response = requests.get(
                 url,
                 headers={
@@ -48,12 +41,9 @@ def get_request(url, **kwargs):
                 params=kwargs
                 )
     except:
-        # If any error occurs
         print("Network exception occurred")
     status_code = response.status_code
     print("With status {} ".format(status_code))
-    #print(response.text)
-    #print(response.request.path_url)
     json_data = json.loads(response.text)
     return json_data
 
@@ -62,7 +52,6 @@ def post_request(url, json_payload, **kwargs):
     print("POST from {} ".format(url))
     try:
         if 'api_key' in kwargs.keys():
-            #api_key in params, use auth
             api_key = kwargs['api_key']
             del(kwargs['api_key'])
             response = requests.post(
@@ -75,7 +64,6 @@ def post_request(url, json_payload, **kwargs):
                 json=json_payload
                 )
         else:
-            #no api_key, don't authenticate
             response = requests.post(
                 url,
                 headers={
@@ -88,8 +76,6 @@ def post_request(url, json_payload, **kwargs):
         print("Network exception occurred")
     status_code = response.status_code
     print("With status {} ".format(status_code))
-    #print(response.text)
-    #print(response.request.path_url)
     json_data = json.loads(response.text)
     return response.json()
 
