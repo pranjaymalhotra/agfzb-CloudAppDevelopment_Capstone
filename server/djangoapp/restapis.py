@@ -1,44 +1,103 @@
-import requests
 import json
-from .models import CarDealer, DealerReview
+import os
+
+import requests
 from requests.auth import HTTPBasicAuth
+
+from .models import CarDealer, DealerReview
+
+URL_API = ''.join([
+    'https://',
+    'service.eu.apiconnect.ibmcloud.com',
+    '/gws/apigateway/api',
+    '/01b28f2350fa121cb3dd7a87ab47d8df4cdd102d0d53cfde82ed87d1b58b24d7',
+    '/api'
+])
+
+WATSON_URL = ''.join([
+    'https://',
+    'api.eu-de.natural-language-understanding.watson.cloud.ibm.com',
+    '/instances/62b5e198-cdd9-44c9-93e1-deb914502af3'
+])
+
+WATSON_API_KEY = os.environ.get('WATSON_API_KEY')
 
 def get_request(url, **kwargs):
     print(kwargs)
     print("GET from {} ".format(url))
     try:
-        response = requests.get(url, headers={'Content-Type': 'application/json'},
-                                            params=kwargs)
+        if 'api_key' in kwargs.keys():
+            #api_key in params, use auth
+            api_key = kwargs['api_key']
+            del(kwargs['api_key'])
+            response = requests.get(
+                url,
+                headers={
+                    'Content-Type': 'application/json'
+                },
+                auth=HTTPBasicAuth('apikey', api_key),
+                params=kwargs
+                )
+        else:
+            #no api_key, don't authenticate
+            response = requests.get(
+                url,
+                headers={
+                    'Content-Type': 'application/json'
+                },
+                params=kwargs
+                )
     except:
+        # If any error occurs
         print("Network exception occurred")
     status_code = response.status_code
     print("With status {} ".format(status_code))
+    #print(response.text)
+    #print(response.request.path_url)
     json_data = json.loads(response.text)
     return json_data
 
-def post_request(url, **kwargs):
+def post_request(url, json_payload, **kwargs):
     print(kwargs)
-    print("POST to {} ".format(url))
+    print("POST from {} ".format(url))
     try:
-        payload = kwargs.pop("payload")
-        response = requests.post(url, headers={'Content-Type': 'application/json'},
-                                            params=kwargs, json=payload)
+        if 'api_key' in kwargs.keys():
+            #api_key in params, use auth
+            api_key = kwargs['api_key']
+            del(kwargs['api_key'])
+            response = requests.post(
+                url,
+                headers={
+                    'Content-Type': 'application/json'
+                },
+                auth=HTTPBasicAuth('apikey', api_key),
+                params=kwargs,
+                json=json_payload
+                )
+        else:
+            #no api_key, don't authenticate
+            response = requests.post(
+                url,
+                headers={
+                    'Content-Type': 'application/json'
+                },
+                params=kwargs,
+                json=json_payload
+                )
     except:
         print("Network exception occurred")
     status_code = response.status_code
     print("With status {} ".format(status_code))
+    #print(response.text)
+    #print(response.request.path_url)
     json_data = json.loads(response.text)
-    return json_data
+    return response.json()
 
-def get_dealers_from_cf(url, **kwargs):
+def get_dealers_from_cf(url = URL_API, **kwargs):
     results = []
-    # Call get_request with a URL parameter
-    json_result = get_request(url)
+    json_result = get_request(url + '/dealership', **kwargs)
     if json_result:
-
-        dealers = json_result["entries"]
-        # For each dealer object
-        for dealer_doc in dealers:
+        for dealer_doc in json_result:
             dealer_obj = CarDealer(
                 address=dealer_doc["address"],
                 city=dealer_doc["city"],
@@ -49,54 +108,49 @@ def get_dealers_from_cf(url, **kwargs):
                 short_name=dealer_doc["short_name"],
                 st=dealer_doc["st"],
                 zip=dealer_doc["zip"]
-            )
+                )
             results.append(dealer_obj)
-
     return results
 
-def get_dealer_reviews_from_cf(url, **kwargs):
-    results = []
-    json_result = get_request(url)
-    if json_result:
-        reviews = json_result["entries"]
-        for review_obj in reviews:
-            review_obj = DealerReview(
-                dealership=review_obj.get("dealership"),
-                name=review_obj.get("name"),
-                purchase=review_obj.get("purchase"),
-                review=review_obj.get("review"),
-                purchase_date=review_obj.get("purchase_date"),
-                car_make=review_obj.get("car_make"),
-                car_model=review_obj.get("car_model"),
-                car_year=review_obj.get("car_year"),
-                sentiment=analyze_review_sentiments(review_obj.get("review")),
-                id=review_obj.get("id")
+def get_dealer_by_id(dealerId, url = URL_API):
+    url = url + '/dealership'
+    return get_dealers_from_cf(url, id = dealerId)[0]
+
+def get_dealer_by_state(state, url = URL_API):
+    url = url + '/dealership'
+    return get_dealers_from_cf(url, state=state)
+
+def get_dealer_reviews_from_cf(dealerId, url = URL_API):
+    def json_to_dealer_review(data):
+        return DealerReview(
+            id=data.get('id', ''),
+            dealership=data['dealership'],
+            review=data['review'],
+            name=data.get('name', ''),
+            purchase=data.get('purchase', ''),
+            purchase_date=data.get('purchase_date', ''),
+            car_make=data.get('car_make', ''),
+            car_model=data.get('car_model', ''),
+            car_year=data.get('car_year', ''),
+            sentiment=analyze_review_sentiments(text=data['review'])
             )
-            results.append(review_obj)
+    url = url + '/review'
+    json_result = get_request(url, dealerId=dealerId)
+    if len(json_result) > 0:
+        reviews = list(map(json_to_dealer_review, json_result))
+        return reviews
+    return []
 
-    return results
-
-def store_review(url, payload):
-    post_request(url, payload=payload)
-
-def store_review(url, payload):
-    post_request(url, payload=payload)
-
-
-def analyze_review_sentiments(text):
-    url = "https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/ea9342cf-1f2d-408d-8a92-2ce03dd249ea"
-    api_key = "90lAvlUc2tQWaHAD9bRopwKh2DZUFKwVV3uiSZwPrEz_"
-    params = {
-        "text": text,
-        "features": {
-            "sentiment": {
-            }
-        },
-        "language": "en"
-    }
-    response = requests.post(url, json=params, headers={'Content-Type': 'application/json'},
-                                    auth=('apikey', api_key))
-    return response.json()["sentiment"]["document"]["label"]
-
-
-
+def analyze_review_sentiments(**kwargs):
+    URL = WATSON_URL + '/v1/analyze'
+    params = dict()
+    params["text"] = kwargs["text"]
+    params["version"] = '2021-03-25'
+    params["features"] = 'sentiment'
+    params["return_analyzed_text"] = 'false'
+    params["api_key"] = WATSON_API_KEY
+    response = get_request(
+        URL,
+        **params
+    )
+    return response["sentiment"]["document"]["label"]
