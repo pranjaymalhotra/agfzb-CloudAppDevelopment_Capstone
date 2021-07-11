@@ -6,13 +6,7 @@ from requests.auth import HTTPBasicAuth
 
 from .models import CarDealer, DealerReview
 
-URL_API = ''.join([
-    'https://',
-    'service.eu.apiconnect.ibmcloud.com',
-    '/gws/apigateway/api',
-    '/01b28f2350fa121cb3dd7a87ab47d8df4cdd102d0d53cfde82ed87d1b58b24d7',
-    '/api'
-])
+URL_API = 
 
 WATSON_URL = ('https://api.eu-gb.natural-language-understanding.watson.cloud.ibm.com/instances/ea9342cf-1f2d-408d-8a92-2ce03dd249ea')
 WATSON_API_KEY = ('90lAvlUc2tQWaHAD9bRopwKh2DZUFKwVV3uiSZwPrEz_')
